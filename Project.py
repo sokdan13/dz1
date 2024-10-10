@@ -111,7 +111,8 @@ class ShellEmulator:
         cmd = parts[0]
 
         if cmd == "ls":
-            return
+            flags = [p for p in parts if p.startswith('-')]
+            self.ls(flags)
         elif cmd == "cd":
             if len(parts) > 1:
                 self.cd(parts[1])
@@ -127,6 +128,47 @@ class ShellEmulator:
             self.write_output(f"{cmd}: command not found\n")
 
             self.echo(" ".join(parts[1:]))
+
+    def ls(self, flags=[]):
+        try:
+            dirs, files = self.vfs.list_dir(self.vfs.current_dir)
+            output = []
+
+            if '-l' in flags:
+                for d in dirs:
+                    output.append(self.format_entry(d, is_dir=True, flags=flags))
+                for f in files:
+                    output.append(self.format_entry(f, is_dir=False, flags=flags))
+            else:
+                output = dirs + files
+
+            if not output:
+                self.write_output("\n")
+            else:
+                self.write_output("\n".join(output) + "\n")
+        except FileNotFoundError:
+            self.write_output(f"ls: cannot access '{self.vfs.current_dir}': No such directory\n")
+
+    def format_entry(self, entry, is_dir, flags):
+        node = self.vfs.get_node(os.path.join(self.vfs.current_dir, entry.strip('/')))
+        info = node if not isinstance(node, dict) else None
+        size = info.size if info else 0
+
+        size_str = self.human_readable_size(size) if '-h' in flags else str(size)
+        file_type = 'd' if is_dir else '-'
+        permissions = 'rw-r--r--'
+        links = 1
+        owner = 'root'
+        group = 'root'
+        mtime = datetime.fromtimestamp(info.mtime).strftime('%b %d %Y') if info else ''
+        return f"{file_type}{permissions} {links} {owner} {group} {size_str:>8} {mtime} {entry}"
+
+    def human_readable_size(self, size):
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024:
+                return f"{size:.1f}{unit}"
+            size /= 1024
+        return f"{size:.1f}PB"
 
     def cd(self, path):
         try:
