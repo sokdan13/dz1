@@ -94,6 +94,39 @@ class ShellEmulator:
         self.input.insert(0, prompt)
         self.input.icursor(len(prompt))
 
+    def run_command(self, event):
+        command_input = self.input.get().split('$', 1)[-1].strip()
+        self.output.config(state=tk.NORMAL)
+        self.output.insert(tk.END, f"{self.username}@virtual:{self.vfs.current_dir}$ {command_input}\n")
+        self.execute_command(command_input)
+        self.update_prompt()
+        self.output.config(state=tk.DISABLED)
+
+
+    def execute_command(self, command):
+        parts = command.split()
+        if not parts:
+            return
+        cmd = parts[0]
+
+        if cmd == "ls":
+            return
+        elif cmd == "cd":
+            return
+        elif cmd == "rm":
+            return
+        elif cmd == "echo":
+            self.echo(" ".join(parts[1:]))
+        elif cmd == "exit":
+            self.root.quit()
+        else:
+            self.write_output(f"{cmd}: command not found\n")
+
+    def echo(self, text):
+        self.write_output(text + "\n")
+
+    def write_output(self, text):
+        self.output.insert(tk.END, text)
 
 
 
