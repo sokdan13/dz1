@@ -78,11 +78,12 @@ class ShellEmulator:
         self.root = root
         self.root.title("Shell Emulator")
 
-        self.output = scrolledtext.ScrolledText(root, height=20, width=80, state=tk.DISABLED, bg="blue", fg="white")
+        self.output = scrolledtext.ScrolledText(root, height=20, width=80, state=tk.DISABLED, bg="black", fg="white")
         self.output.pack()
 
         self.input = tk.Entry(root, width=80)
         self.input.pack()
+        self.input.bind("<Return>", self.run_command)
 
         self.username = username
         self.vfs = vfs
@@ -112,7 +113,10 @@ class ShellEmulator:
         if cmd == "ls":
             return
         elif cmd == "cd":
-            return
+            if len(parts) > 1:
+                self.cd(parts[1])
+            else:
+                self.write_output("cd: missing operand\n")
         elif cmd == "rm":
             return
         elif cmd == "echo":
@@ -121,6 +125,14 @@ class ShellEmulator:
             self.root.quit()
         else:
             self.write_output(f"{cmd}: command not found\n")
+
+            self.echo(" ".join(parts[1:]))
+
+    def cd(self, path):
+        try:
+            self.vfs.change_dir(path)
+        except FileNotFoundError:
+            self.write_output(f"cd: no such file or directory: {path}\n")
 
     def echo(self, text):
         self.write_output(text + "\n")
