@@ -119,7 +119,10 @@ class ShellEmulator:
             else:
                 self.write_output("cd: missing operand\n")
         elif cmd == "rm":
-            return
+            if len(parts) > 1:
+                self.rm(parts[1])
+            else:
+                self.write_output("rm: missing operand\n")
         elif cmd == "echo":
             self.echo(" ".join(parts[1:]))
         elif cmd == "exit":
@@ -175,6 +178,13 @@ class ShellEmulator:
             self.vfs.change_dir(path)
         except FileNotFoundError:
             self.write_output(f"cd: no such file or directory: {path}\n")
+
+    def rm(self, path):
+        try:
+            self.vfs.remove(path)
+            self.write_output(f"Removed {path}\n")
+        except FileNotFoundError:
+            self.write_output(f"rm: cannot remove '{path}': No such file or directory\n")
 
     def echo(self, text):
         self.write_output(text + "\n")
