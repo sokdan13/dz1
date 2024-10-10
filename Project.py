@@ -208,9 +208,27 @@ def main():
     root = tk.Tk()
     shell = ShellEmulator(root, args.user, vfs)
 
+    if args.script:
+        execute_script(args.script, shell)
 
     root.mainloop()
 
+
+def execute_script(script_path, shell):
+    try:
+        with open(script_path, 'r') as file:
+            commands = file.readlines()
+        for command in commands:
+            command = command.strip()
+            if command:
+                shell.input.delete(0, tk.END)
+                shell.input.insert(0, command)
+                shell.run_command(None)
+        shell.write_output(f"Startup script {script_path} executed successfully.\n")
+    except FileNotFoundError:
+        shell.write_output(f"Script file not found: {script_path}\n")
+    except Exception as e:
+        shell.write_output(f"Error executing script: {e}\n")
 
 if __name__ == "__main__":
     main()
