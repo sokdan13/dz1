@@ -37,19 +37,35 @@ class VirtualFileSystem:
         return [], []
 
     def change_dir(self, path):
+        # Если путь / - вернуться в корневой каталог
         if path == "/":
             self.current_dir = "/bs"
-        elif path == "..":
-            if self.current_dir != "/bs":
-                self.current_dir = "/".join(self.current_dir.strip('/').split('/')[:-1])
-                if not self.current_dir:
-                    self.current_dir = "/bs"
         else:
-            new_dir = os.path.join(self.current_dir, path).replace("\\", "/").strip('/')
+            # Разбиваем путь на части, поддержка как относительных, так и абсолютных путей
+            if path.startswith("/"):
+                new_dir = "/bs"  # Абсолютный путь начинается с корневого каталога
+            else:
+                new_dir = self.current_dir  # Относительный путь начинается с текущей директории
+
+            parts = path.split('/')  # Разбиваем путь на части
+            for part in parts:
+                if part == '' or part == '.':
+                    continue  # Игнорируем пустые части и '.'
+                elif part == "..":
+                    # Переход на уровень выше
+                    if new_dir != "/bs":
+                        new_dir = "/".join(new_dir.strip('/').split('/')[:-1])
+                        if not new_dir:
+                            new_dir = "/bs"
+                else:
+                    # Переход в подкаталог
+                    new_dir = os.path.join(new_dir, part).replace("\\", "/").strip('/')
+
+            # Проверяем, существует ли новая директория
             if new_dir and self.get_node(new_dir):
                 self.current_dir = '/' + new_dir
             else:
-                raise FileNotFoundError
+                raise FileNotFoundError(f"cd: no such file or directory: {path}")
 
     def remove(self, path):
         full_path = os.path.join(self.current_dir, path).replace("\\", "/").strip('/')
