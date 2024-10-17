@@ -188,8 +188,10 @@ class ShellEmulator:
             self.echo(" ".join(parts[1:]))
         elif cmd == "exit":
             self.root.quit()
+            raise SystemExit
         else:
             self.write_output(f"{cmd}: command not found\n")
+
 
             self.echo(" ".join(parts[1:]))
 
@@ -256,6 +258,8 @@ class ShellEmulator:
         self.output.see(tk.END)  # Прокручиваем до конца
         self.output.config(state=tk.DISABLED)  # Блокируем редактирование
 
+    def get_output_content(self):
+        return self.output.get("1.0", tk.END).strip()
 
 
 
