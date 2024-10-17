@@ -119,6 +119,7 @@ class ShellEmulator:
     def __init__(self, root, username, vfs):
         self.root = root
         self.root.title("Shell Emulator")
+        self.prompt_length = 0  # Новый атрибут для хранения длины приглашения
 
         self.output = scrolledtext.ScrolledText(root, height=20, width=80, state=tk.DISABLED, bg="black", fg="white")
         self.output.pack()
@@ -126,21 +127,28 @@ class ShellEmulator:
         self.input = tk.Entry(root, width=80)
         self.input.pack()
         self.input.bind("<Return>", self.run_command)
+        self.input.bind("<KeyPress>", self.on_key_press)  # Обработка нажатий клавиш
 
         self.username = username
         self.vfs = vfs
         self.update_prompt()
 
+    def on_key_press(self, event):
+        # Блокируем удаление текста до позиции приглашения
+        if self.input.index(tk.INSERT) < self.prompt_length and event.keysym in ("BackSpace", "Left"):
+            return "break"  # Останавливаем стандартное поведение
+
     def update_prompt(self):
         if self.vfs.current_dir == "/bs":
             prompt_dir = "~"
         else:
-            prompt_dir = self.vfs.current_dir.replace("/bs", "~", 1)
+            prompt_dir = self.vfs.current_dir.replace("/bs", "~", 1)  # Заменяем /bs на ~ для подкаталогов
 
         prompt = f"{self.username}@virtual:{prompt_dir}$ "
         self.input.delete(0, tk.END)
         self.input.insert(0, prompt)
-        self.input.icursor(len(prompt))  # Устанавливаем курсор в конец
+        self.input.icursor(len(prompt))
+        self.prompt_length = len(prompt)  # Сохраняем длину приглашения
 
     def run_command(self, event):
         command_input = self.input.get().split('$', 1)[-1].strip()
