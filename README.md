@@ -152,3 +152,5 @@
   - **`script_path`:** Путь к файлу сценария.
     
   - **`shell`:** Экземпляр `ShellEmulator`, в котором будут выполнены команды.
+## Результаты тестирования
+![image](https://github.com/user-attachments/assets/90eb1e40-3cf7-4da1-a3e2-bafbe0922b8f)
