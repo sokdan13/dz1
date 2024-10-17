@@ -23,9 +23,9 @@ class VirtualFileSystem:
                     current[part] = {}
                 current = current[part]
             if member.isdir():
-                current[path_parts[-1]] = {}
+                current[path_parts[-1]] = {}  # Папка, даже если она пустая
             else:
-                current[path_parts[-1]] = member
+                current[path_parts[-1]] = member  # Файл
         return file_tree
 
     def list_dir(self, path):
@@ -37,35 +37,60 @@ class VirtualFileSystem:
         return [], []
 
     def change_dir(self, path):
-        # Если путь / - вернуться в корневой каталог
+        # Если путь абсолютный
         if path == "/":
             self.current_dir = "/bs"
+            return
+
+        # Разбиваем путь на сегменты
+        parts = path.split('/')
+
+        # Строим новый путь относительно текущего каталога
+        if path.startswith('/'):
+            new_dir = ["bs"]  # Абсолютный путь от корня
         else:
-            # Разбиваем путь на части, поддержка как относительных, так и абсолютных путей
-            if path.startswith("/"):
-                new_dir = "/bs"  # Абсолютный путь начинается с корневого каталога
-            else:
-                new_dir = self.current_dir  # Относительный путь начинается с текущей директории
+            new_dir = self.current_dir.strip('/').split('/')  # Относительный путь от текущего каталога
 
-            parts = path.split('/')  # Разбиваем путь на части
-            for part in parts:
-                if part == '' or part == '.':
-                    continue  # Игнорируем пустые части и '.'
-                elif part == "..":
-                    # Переход на уровень выше
-                    if new_dir != "/bs":
-                        new_dir = "/".join(new_dir.strip('/').split('/')[:-1])
-                        if not new_dir:
-                            new_dir = "/bs"
-                else:
-                    # Переход в подкаталог
-                    new_dir = os.path.join(new_dir, part).replace("\\", "/").strip('/')
-
-            # Проверяем, существует ли новая директория
-            if new_dir and self.get_node(new_dir):
-                self.current_dir = '/' + new_dir
+        for part in parts:
+            if part == "..":
+                # Переход на уровень выше
+                if len(new_dir) > 1:  # Чтобы не выйти за корневую директорию
+                    new_dir.pop()
+            elif part == "." or part == "":  # Игнорируем текущий каталог (".") и пустые сегменты
+                continue
             else:
-                raise FileNotFoundError(f"cd: no such file or directory: {path}")
+                new_dir.append(part)
+
+        # Собираем полный путь
+        full_path = "/" + "/".join(new_dir).strip('/')
+
+        # Проверяем, что конечный путь существует в виртуальной файловой системе
+        if self.get_node(full_path) is not None:
+            self.current_dir = full_path
+        else:
+            raise FileNotFoundError(f"cd: no such file or directory: {path}")
+
+    def get_node(self, path):
+        """ Возвращает узел (файл или директорию) по заданному пути. """
+        parts = path.strip("/").split('/')
+        current = self.file_tree
+        for part in parts:
+            if part and part in current:
+                current = current[part]
+            else:
+                return None  # Если узел не найден, возвращаем None
+        return current  # Возвращает файл или директорию, включая пустые папки
+
+    def get_node(self, path):
+        """ Возвращает узел (файл или директорию) по заданному пути. """
+        parts = path.strip("/").split('/')
+        current = self.file_tree
+        for part in parts:
+            if part and part in current:
+                current = current[part]
+            else:
+                return None  # Если узел не найден, возвращаем None
+        return current  # Возвращает файл или директорию, включая пустые папки
 
     def remove(self, path):
         full_path = os.path.join(self.current_dir, path).replace("\\", "/").strip('/')
@@ -89,6 +114,7 @@ class VirtualFileSystem:
 
 
 
+
 class ShellEmulator:
     def __init__(self, root, username, vfs):
         self.root = root
@@ -106,28 +132,27 @@ class ShellEmulator:
         self.update_prompt()
 
     def update_prompt(self):
-        # Если находимся в корневом каталоге, то отображаем ~
         if self.vfs.current_dir == "/bs":
             prompt_dir = "~"
         else:
-            prompt_dir = self.vfs.current_dir.replace("/bs", "~", 1)  # Заменяем /bs на ~ для подкаталогов
+            prompt_dir = self.vfs.current_dir.replace("/bs", "~", 1)
 
         prompt = f"{self.username}@virtual:{prompt_dir}$ "
         self.input.delete(0, tk.END)
         self.input.insert(0, prompt)
-        self.input.icursor(len(prompt))
+        self.input.icursor(len(prompt))  # Устанавливаем курсор в конец
 
     def run_command(self, event):
         command_input = self.input.get().split('$', 1)[-1].strip()
 
-        # Преобразование пути для вывода в терминал
         if self.vfs.current_dir == "/bs":
             display_dir = "~"
         else:
             display_dir = self.vfs.current_dir.replace("/bs", "~", 1)
 
         self.output.config(state=tk.NORMAL)
-        self.output.insert(tk.END, f"{self.username}@virtual:{display_dir}$ {command_input}\n")
+        self.output.insert(tk.END,
+                           f"{self.username}@virtual:{display_dir}$ {command_input}\n")  # Добавлен перевод строки
         self.execute_command(command_input)
         self.update_prompt()
         self.output.config(state=tk.DISABLED)
@@ -218,7 +243,10 @@ class ShellEmulator:
         self.write_output(text + "\n")
 
     def write_output(self, text):
-        self.output.insert(tk.END, text)
+        self.output.config(state=tk.NORMAL)  # Включаем возможность редактирования
+        self.output.insert(tk.END, text)  # Вставляем текст в конец
+        self.output.see(tk.END)  # Прокручиваем до конца
+        self.output.config(state=tk.DISABLED)  # Блокируем редактирование
 
 
 
