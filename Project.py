@@ -106,19 +106,31 @@ class ShellEmulator:
         self.update_prompt()
 
     def update_prompt(self):
-        prompt = f"{self.username}@virtual:{self.vfs.current_dir}$ "
+        # Если находимся в корневом каталоге, то отображаем ~
+        if self.vfs.current_dir == "/bs":
+            prompt_dir = "~"
+        else:
+            prompt_dir = self.vfs.current_dir.replace("/bs", "~", 1)  # Заменяем /bs на ~ для подкаталогов
+
+        prompt = f"{self.username}@virtual:{prompt_dir}$ "
         self.input.delete(0, tk.END)
         self.input.insert(0, prompt)
         self.input.icursor(len(prompt))
 
     def run_command(self, event):
         command_input = self.input.get().split('$', 1)[-1].strip()
+
+        # Преобразование пути для вывода в терминал
+        if self.vfs.current_dir == "/bs":
+            display_dir = "~"
+        else:
+            display_dir = self.vfs.current_dir.replace("/bs", "~", 1)
+
         self.output.config(state=tk.NORMAL)
-        self.output.insert(tk.END, f"{self.username}@virtual:{self.vfs.current_dir}$ {command_input}\n")
+        self.output.insert(tk.END, f"{self.username}@virtual:{display_dir}$ {command_input}\n")
         self.execute_command(command_input)
         self.update_prompt()
         self.output.config(state=tk.DISABLED)
-
 
     def execute_command(self, command):
         parts = command.split()
