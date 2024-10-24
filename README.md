@@ -49,6 +49,8 @@
   - `--vfs`: путь к файлу `.tar`, который служит виртуальной файловой системой.
 2. При желании можно указать аргумент `--script`, чтобы указать путь к скрипту запуска (текстовый файл с командами оболочки), который будет выполняться при запуске оболочки.
 ##### Пример: ```bash python shell_emulator.py --user your_username --vfs path/to/vfs.tar --script path/to/script.txt ```
+![image](https://github.com/user-attachments/assets/2d574799-ebf3-4b73-8472-7e05739d459c)
+
 ## Классы и функции 
 ### 1. `VirtualFileSystem` 
 Этот класс имитирует файловую систему на основе архива `.tar`. 
@@ -57,7 +59,8 @@
 
 - `tar_path`: путь к файлу `.tar`, который действует как виртуальная файловая система.
 - Инициализирует виртуальную файловую систему и устанавливает текущий каталог в `/bs`.
-  
+  ![image](https://github.com/user-attachments/assets/96e0029e-ac6a-4bea-9c14-98b385fa2b9d)
+
 **`build_file_tree(self)`**
 
 - Строит древовидную структуру из архива `.tar`, представляющую каталоги и файлы.
@@ -88,6 +91,7 @@
 
 ### 2. `ShellEmulator` 
 Этот класс реализует интерфейс оболочки с помощью `tkinter`.
+![image](https://github.com/user-attachments/assets/0b37dc0c-ed8d-4b52-be71-a202818aa82b)
 
 **Конструктор (`__init__(self, root, username, vfs)`)**
  - `root`: Корневое окно `tkinter`. 
@@ -154,3 +158,8 @@
   - **`shell`:** Экземпляр `ShellEmulator`, в котором будут выполнены команды.
 ## Результаты тестирования
 ![image](https://github.com/user-attachments/assets/90eb1e40-3cf7-4da1-a3e2-bafbe0922b8f)
+![image](https://github.com/user-attachments/assets/368255a1-5c1a-4b5c-8086-7b0f4eb8ed30)
+![image](https://github.com/user-attachments/assets/4afbb659-7418-4819-9a00-f380366bdfb6)
+![image](https://github.com/user-attachments/assets/56eea30e-52c1-497e-a97a-d357a115e0f7)
+
+
